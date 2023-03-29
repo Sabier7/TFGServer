@@ -1,15 +1,32 @@
-var express = require('express');
-var bodyParser = require('body-parser');
-var logger = require('morgan');
-var methodOverride = require('method-override');
-var cors = require('cors');
-var app = express();
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(methodOverride());
-app.use(cors());
-app.post('/posts', function (req, res) {
-    res.json({ success: true });});
+import Express from 'express';
+//import mysql from 'mysql';
 
+//al tratarse de un archivo propio se pone delante ./ y el nombre del archivo
+import {pool} from './db.js';
 
-app.listen(process.env.PORT || 8080);
+const app = Express();
+const port =  3000;
+
+//const db = mysql.createConnection({
+ // host: 'localhost',
+  //user: 'root',
+  //password: 'DBlutomavar1',
+  //database: 'mi_basededatos',
+//});
+
+//db.connect((err) => {
+ // if (err) throw err;
+//  console.log('Conectado a la base de datos');
+//});
+
+// Configurar el servidor
+app.get('/', (req, res) => {
+  res.send('Hola, mundo!');
+});
+app.get('/ping', async (req, res) => {
+ const [result] = await pool.query('SELECT 1 + 1 AS result')
+  res.json(result[0])
+});
+// Iniciar el servidor
+app.listen(port)
+
