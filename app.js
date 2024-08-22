@@ -2,6 +2,7 @@
 // Autor: Jonatan David Vargas Revollo
 // Fecha:
 // Copyrigh (c) 2023
+// comando para iniciar "npm run dev"
 
 import { server } from './src/server.js'
 

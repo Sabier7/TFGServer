@@ -1,14 +1,25 @@
+// Autor: Jonatan David Vargas Revollo
+// Fecha:
+// Copyrigh (c) 2023
+
 import {Router} from 'express'
-import { getCliente, createCliente, updateCliente,deleteCliente} from '../controllers/action.controllers.js'
+import { getCliente, createCliente, updateCliente, deleteCliente, getProductos, getProductoById, createProducto, updateProducto, deleteProducto } 
+from '../controllers/action.controllers.js';
 
-const router = Router()
-// Configurar el servidor estas acciones estan pasadas a la carpeta controllers para mayor claridad
-router.get('/cliente', getCliente)
+const router = Router();
 
-router.post('/cliente',createCliente)
+// Rutas para clientes
+router.get('/cliente/:id', getCliente);
+router.post('/cliente', createCliente);
+router.put('/cliente/:id', updateCliente);
+router.delete('/cliente/:id', deleteCliente);
 
-router.put('/cliente',updateCliente)
+// Rutas para productos
+router.get('/productos', getProductos);          // Obtener todos los productos
+router.get('/productos/:id', getProductoById);   // Obtener un producto por ID
+router.post('/productos', createProducto);       // Crear un nuevo producto
+router.put('/productos/:id', updateProducto);    // Actualizar un producto
+router.delete('/productos/:id', deleteProducto); // Eliminar un producto
 
-router.delete('/cliente', deleteCliente)
 
 export default router
