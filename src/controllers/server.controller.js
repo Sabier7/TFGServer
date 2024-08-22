@@ -1,6 +1,6 @@
-import { pool } from '../db.js'
+import { database } from '../Database.js'
 
 export const ping = async (req, res) => {
-    const [result] = await pool.query('SELECT "Pong" AS result') 
+    const [result] = await database.query ('SELECT "Pong" AS result') 
     res.json(result[0])
-    }
+ }
