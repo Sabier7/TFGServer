@@ -20,7 +20,7 @@ export const createCliente = async (req, res) => {
     try {
         const { nombre, telefono, orden_de_trabajo, mecanico, electrico, descripcion } = req.body;
         // No incluyas el ID en la inserción, ya que se generará automáticamente.
-        await database.query('INSERT INTO clientes (nombre, telefono, orden_de_trabajo, mecanico, electrico, descripcion) VALUES (?, ?, ?, ?, ?, ?)', [nombre, telefono, orden_de_trabajo, mecanico, electrico, descripcion]);
+        await database.query('INSERT INTO clientes (nombre, telefono, ordenDeTrabajo, mecanico, electrico, descripcion) VALUES (?, ?, ?, ?, ?, ?)', [nombre, telefono, orden_de_trabajo, mecanico, electrico, descripcion]);
         res.json({ message: 'Cliente Creado' });
     } catch (error) {
         console.error(error);
@@ -113,5 +113,47 @@ export const deleteProducto = async (req, res) => {
         res.json({ message: 'Producto eliminado' });
     } catch (error) {
         res.status(500).json({ error: 'Error al eliminar producto' });
+    }
+};
+export const getClienteByQR = async (req, res) => {
+    const codigoQR = req.query.codigoQR; // Extraer el codigoQR de la query string
+
+    try {
+        const cliente = await database.query('SELECT * FROM clientes WHERE codigoQR = ?', [codigoQR]);
+        if (cliente.length > 0) {
+            res.json(cliente[0]);
+        } else {
+            res.status(404).json({ message: 'Cliente no encontrado' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Error en la consulta', error });
+    }
+};
+export const getProductoByQR = async (req, res) => {
+    const codigoQR = req.query.codigoQR; // Extraer el codigoQR de la query string
+
+    try {
+        const producto = await database.query('SELECT * FROM productos WHERE codigoQR = ?', [codigoQR]);
+        if (producto.length > 0) {
+            res.json(producto[0]);
+        } else {
+            res.status(404).json({ message: 'Producto no encontrado' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Error en la consulta', error });
+    }
+};
+export const getClienteById = async (req, res) => {
+    const id = req.query.id; // Asume que el código QR contiene el id del cliente
+
+    try {
+        const cliente = await database.query('SELECT * FROM clientes WHERE id = ?', [id]);
+        if (cliente.length > 0) {
+            res.json(cliente[0]);
+        } else {
+            res.status(404).json({ message: 'Cliente no encontrado' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Error en la consulta', error });
     }
 };

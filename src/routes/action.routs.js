@@ -3,7 +3,7 @@
 // Copyrigh (c) 2023
 
 import {Router} from 'express'
-import { getCliente, createCliente, updateCliente, deleteCliente, getProductos, getProductoById, createProducto, updateProducto, deleteProducto } 
+import { getCliente, createCliente, updateCliente, deleteCliente, getProductos, getProductoById, createProducto, updateProducto, deleteProducto, getClienteByQR, getProductoByQR } 
 from '../controllers/action.controllers.js';
 
 const router = Router();
@@ -13,7 +13,8 @@ router.get('/cliente/:id', getCliente);
 router.post('/cliente', createCliente);
 router.put('/cliente/:id', updateCliente);
 router.delete('/cliente/:id', deleteCliente);
-
+router.get('/cliente', getClienteByQR);
+router.get('/producto', getProductoByQR);
 // Rutas para productos
 router.get('/productos', getProductos);          // Obtener todos los productos
 router.get('/productos/:id', getProductoById);   // Obtener un producto por ID
@@ -22,4 +23,4 @@ router.put('/productos/:id', updateProducto);    // Actualizar un producto
 router.delete('/productos/:id', deleteProducto); // Eliminar un producto
 
 
-export default router
+export default router 

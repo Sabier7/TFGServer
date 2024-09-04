@@ -1,59 +1,55 @@
 // Autor: Jonatan David Vargas Revollo
 // Fecha:
 // Copyrigh (c) 2023
-
-import Express from 'express';
-
-//import mysql from 'mysql';
-
-//al tratarse de un archivo propio se pone delante ./ y el nombre del archivo
+import express from 'express';  // Corrige a express con minúscula
 import { database } from './controllers/Database.js';
-// puedo crear una variable clientes y pasarle una ruta para usar posteriormente 
 import Clientes from './routes/action.routs.js';
 import InfoDB from './routes/server.routes.js';
 
-class Server
-{ 
-    async start(port)
-  {
-    // Deberías usar try-catch para manejar errores
+const app = express();
+
+// Middleware para analizar cuerpos JSON
+app.use(express.json());
+
+// Middleware para analizar cuerpos codificados en URL
+app.use(express.urlencoded({ extended: true }));
+
+class Server {
+  async start(port) {
     try {
       log.info("Connecting to database...");
       
-      // Espera a que la conexión a la base de datos se complete antes de continuar
-      await database.connect();
+      await database.connect(); // Conecta con la base de datos
 
       log.info("Starting server...");
       await this.startServer(port);
-    } 
-    catch (error) {
-      // Maneja cualquier error que ocurra durante la conexión o el inicio del servidor
+    } catch (error) {
       log.error("Error starting server:", error);
     }
   }
 
-    async connectDatabase ()
-    {
-    }
+  async startServer(port) {
+    const app = express();  // Instancia de la aplicación Express
+    
+    // Middleware de Express para analizar solicitudes
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
 
-    async startServer (port)
-    {
-        const app = Express();
-        
-        //esta linea declara lo que usare para acceder a emplados una ves indicada la ruta de donde esta clientes
-        app.use (Clientes)
+    // Configuración de rutas
+    app.use(Clientes);
+    app.use(InfoDB);
 
-        app.use (InfoDB)
+    // Inicia el servidor en el puerto especificado
+    app.listen(port, () => {
+      log.info(`Server is running on port ${port}`);
+    });
 
-        app.listen(port, () => {
-            log.info(`Server is running on port ${port}`);
-          });
-
-        app.use((err, req, res, next) => {
-            log.error("Server error:", err);
-            res.status(500).json({ error: 'Internal server error' });
-          });
-    }
+    // Manejo de errores global
+    app.use((err, req, res, next) => {
+      log.error("Server error:", err);
+      res.status(500).json({ error: 'Internal server error' });
+    });
+  }
 }
 
-export const server = new Server()
+export const server = new Server();
