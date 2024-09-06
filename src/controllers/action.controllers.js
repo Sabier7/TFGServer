@@ -28,17 +28,33 @@ export const createCliente = async (req, res) => {
     }
 };
 
-
 export const updateCliente = async (req, res) => {
+    const id = req.params.id;
+    const { nombre, telefono, ordenDeTrabajo, mecanico, electrico, descripcionNueva } = req.body;
+  
     try {
-        const id = req.params.id; // Obtener el ID del cliente desde la URL
-        // Resto del código para actualizar el cliente usando el ID
-        // ...
+      // Obtener el cliente actual para preservar la descripción anterior
+      const cliente = await database.query('SELECT * FROM clientes WHERE id = ?', [id]);
+      if (cliente.length === 0) {
+        return res.status(404).json({ message: 'Cliente no encontrado' });
+      }
+  
+      // Combinar la descripción anterior con la nueva
+      const nuevaDescripcionCompleta = `${cliente[0].descripcion}\n${new Date().toLocaleString()}: ${descripcionNueva}`;
+  
+      // Actualizar el cliente en la base de datos
+      await database.query(
+        'UPDATE clientes SET nombre = ?, telefono = ?, ordenDeTrabajo = ?, mecanico = ?, electrico = ?, descripcion = ? WHERE id = ?',
+        [nombre, telefono, ordenDeTrabajo, mecanico, electrico, nuevaDescripcionCompleta, id]
+      );
+  
+      res.json({ message: 'Cliente actualizado correctamente' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error updating client' });
+      console.error('Error al actualizar cliente:', error);
+      res.status(500).json({ message: 'Error en la actualización', error });
     }
-};
+  };
+  
 
 export const deleteCliente = async (req, res) => {
     try {
@@ -58,41 +74,104 @@ export const getProductos = async (req, res) => {
         res.status(500).json({ error: 'Error al obtener productos' });
     }
 };
+export const getOrCreateProducto = async (req, res) => {
+    const { nombre, descripcion, precio, cantidad, fechaCaducidad } = req.body;
+    
+    console.log('Datos recibidos del QR:', { nombre, descripcion, precio, cantidad, fechaCaducidad });
+    try {
+        // Verificar si el producto ya existe
+        let query = 'SELECT * FROM productos WHERE nombre = ? AND descripcion = ? AND precio = ?';
+        let params = [nombre, descripcion, precio];
+
+        if (fechaCaducidad) {
+            query += ' AND fecha_caducidad = ?';
+            params.push(fechaCaducidad);
+        }
+
+        const [producto] = await database.query(query, params);
+
+        if (producto.length > 0) {
+            // El producto ya existe, aumentar la cantidad
+            const productoExistente = producto[0];
+            const nuevaCantidad = productoExistente.cantidad + cantidad;
+            await database.query('UPDATE productos SET cantidad = ? WHERE id = ?', [nuevaCantidad, productoExistente.id]);
+
+            return res.json({ message: 'Cantidad actualizada', producto: { ...productoExistente, cantidad: nuevaCantidad } });
+        } else {
+            // El producto no existe, agregarlo
+            const [result] = await database.query(
+                'INSERT INTO productos (nombre, descripcion, precio, cantidad, fecha_caducidad) VALUES (?, ?, ?, ?, ?)',
+                [nombre, descripcion, precio, cantidad, fechaCaducidad || null]
+            );
+
+            return res.json({
+                message: 'Producto creado',
+                producto: { id: result.insertId, nombre, descripcion, precio, cantidad, fechaCaducidad }
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({ message: 'Error al procesar el producto', error });
+    }
+};
 
 // Obtener un producto por ID
-export const getProductoById = async (req, res) => {
+export const searchByName = async (req, res) => {
+    const { searchType, nombre } = req.query;
+
+    console.log('Datos recibidos:', { searchType, nombre });
+
     try {
-        const [rows] = await database.query('SELECT * FROM productos WHERE id = ?', [req.params.id]);
-        if (rows.length === 0) {
-            return res.status(404).json({ error: 'Producto no encontrado' });
+        let query;
+        let params = [nombre];
+
+        if (searchType === 'cliente') {
+            query = 'SELECT * FROM clientes WHERE nombre = ?';
+        } else if (searchType === 'producto') {
+            query = 'SELECT * FROM productos WHERE nombre = ?';
+        } else {
+            return res.status(400).json({ message: 'Tipo de búsqueda no válido.' });
         }
-        res.json(rows[0]);
+
+        // Ejecutar la consulta
+        const [results] = await database.query(query, params);
+
+        console.log('Resultados de la consulta:', results);
+
+        // Asegúrate de que los resultados sean un array, incluso si solo hay un cliente
+        if (results) {
+            const formattedResults = Array.isArray(results) ? results : [results];  // Convierte en array si es necesario
+            res.json(formattedResults);  // Devuelve un array
+        } else {
+            res.status(404).json({ message: `${searchType === 'cliente' ? 'Cliente' : 'Producto'} no encontrado` });
+        }
     } catch (error) {
-        res.status(500).json({ error: 'Error al obtener producto' });
+        console.error('Error al realizar la búsqueda:', error);
+        res.status(500).json({ message: 'Error en la consulta', error });
     }
 };
 
 // Crear un nuevo producto
 export const createProducto = async (req, res) => {
-    const { nombre, descripcion, cantidad, precio } = req.body;
+    const { nombre, descripcion, precio, cantidad, fechaCaducidad } = req.body;
+
     try {
         const [result] = await database.query(
-            'INSERT INTO productos (nombre, descripcion, cantidad, precio) VALUES (?, ?, ?, ?)',
-            [nombre, descripcion, cantidad, precio]
+            'INSERT INTO productos (nombre, descripcion, precio, cantidad, fecha_caducidad) VALUES (?, ?, ?, ?, ?)',
+            [nombre, descripcion, precio, cantidad, fechaCaducidad]
         );
-        res.status(201).json({ id: result.insertId, nombre, descripcion, cantidad, precio });
+        res.status(201).json({ id: result.insertId, nombre, descripcion, precio, cantidad, fechaCaducidad });
     } catch (error) {
-        res.status(500).json({ error: 'Error al crear producto' });
+        res.status(500).json({ error: 'Error al crear producto', error });
     }
 };
 
 // Actualizar un producto
 export const updateProducto = async (req, res) => {
-    const { nombre, descripcion, cantidad, precio } = req.body;
+    const { nombre, descripcion, precio, cantidad, fechaCaducidad } = req.body;
     try {
         const [result] = await database.query(
-            'UPDATE productos SET nombre = ?, descripcion = ?, cantidad = ?, precio = ? WHERE id = ?',
-            [nombre, descripcion, cantidad, precio, req.params.id]
+            'UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, cantidad = ?, fecha_caducidad = ? WHERE id = ?',
+            [nombre, descripcion, cantidad, precio, fecha_caducidad, req.params.id]
         );
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Producto no encontrado' });
@@ -100,6 +179,23 @@ export const updateProducto = async (req, res) => {
         res.json({ message: 'Producto actualizado' });
     } catch (error) {
         res.status(500).json({ error: 'Error al actualizar producto' });
+    }
+};
+export const updateProductoCantidad = async (req, res) => {
+    const id = req.params.id; // ID del producto
+    const { cantidad } = req.body;
+
+    try {
+        const [result] = await database.query(
+            'UPDATE productos SET cantidad = ? WHERE id = ?',
+            [cantidad, id]
+        );
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        res.json({ message: 'Cantidad de producto actualizada' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar cantidad del producto' });
     }
 };
 
@@ -130,19 +226,60 @@ export const getClienteByQR = async (req, res) => {
     }
 };
 export const getProductoByQR = async (req, res) => {
-    const codigoQR = req.query.codigoQR; // Extraer el codigoQR de la query string
+    const { nombre, descripcion, precio, fechaCaducidad } = req.query; // Asumimos que estos valores vienen del QR
 
     try {
-        const producto = await database.query('SELECT * FROM productos WHERE codigoQR = ?', [codigoQR]);
+        // Definir la consulta base para buscar productos por nombre, descripción y precio
+        let query = 'SELECT * FROM productos WHERE nombre = ? AND descripcion = ? AND precio = ?';
+        let params = [nombre, descripcion, precio];
+
+        // Si hay fecha de caducidad, agregarla como condición adicional
+        if (fechaCaducidad) {
+            query += ' AND fecha_caducidad = ?';
+            params.push(fechaCaducidad);
+        }
+
+        const [producto] = await database.query(query, params);
+
         if (producto.length > 0) {
+            // Si el producto ya existe con los mismos criterios
             res.json(producto[0]);
         } else {
+            // Producto no encontrado
             res.status(404).json({ message: 'Producto no encontrado' });
         }
     } catch (error) {
         res.status(500).json({ message: 'Error en la consulta', error });
     }
 };
+export const getProductoByNombreYFecha = async (req, res) => {
+    const nombre = req.query.nombre;
+    const fechaCaducidad = req.query.fecha_caducidad || null;
+
+    try {
+        // Construir la consulta SQL
+        let query = 'SELECT * FROM productos WHERE nombre = ?';
+        let params = [nombre];
+
+        // Si la fecha de caducidad es proporcionada, agregarla a la consulta
+        if (fechaCaducidad) {
+            query += ' AND fecha_caducidad = ?';
+            params.push(fechaCaducidad);
+        }
+
+        const producto = await database.query(query, params);
+
+        if (producto.length > 0) {
+            res.json(producto[0]);
+        } else {
+            res.status(404).json({ message: 'Producto no encontrado' });
+        }
+    } catch (error) {
+        console.error('Error al obtener el producto:', error);
+        res.status(500).json({ message: 'Error en la consulta', error });
+    }
+};
+
 export const getClienteById = async (req, res) => {
     const id = req.query.id; // Asume que el código QR contiene el id del cliente
 
