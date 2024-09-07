@@ -1,7 +1,8 @@
+//
 // Autor: Jonatan David Vargas Revollo
-// Fecha:
 // Copyrigh (c) 2023
-import express from 'express';  // Corrige a express con minúscula
+
+import express from 'express'; 
 import { database } from './controllers/Database.js';
 import Clientes from './routes/action.routs.js';
 import InfoDB from './routes/server.routes.js';
@@ -31,6 +32,7 @@ class Server {
   async startServer(port) {
     const app = express();  // Instancia de la aplicación Express
     
+    /*  */
     // Middleware de Express para analizar solicitudes
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));

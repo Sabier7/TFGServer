@@ -1,3 +1,6 @@
+//
+// Autor: Jonatan David Vargas Revollo
+// Copyrigh (c) 2023
 
 import { createPool } from 'mysql2/promise'
 

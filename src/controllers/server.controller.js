@@ -1,5 +1,5 @@
+//
 // Autor: Jonatan David Vargas Revollo
-// Fecha:
 // Copyrigh (c) 2023
 
 import { database } from './Database.js'

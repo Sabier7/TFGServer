@@ -1,3 +1,7 @@
+//
+// Autor: Jonatan David Vargas Revollo
+// Copyrigh (c) 2023
+
 CREATE DATABASE IF NOT EXISTS mi_basededatos;
 USE mi_basededatos;
 

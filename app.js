@@ -1,10 +1,10 @@
 
 // Autor: Jonatan David Vargas Revollo
-// Fecha:
 // Copyrigh (c) 2023
-// comando para iniciar "npm run dev"
+// comando para iniciar "node app.js"
 
 import { server } from './src/server.js'
+
 
 global.log = console
 

@@ -1,3 +1,7 @@
+//
+// Autor: Jonatan David Vargas Revollo
+// Copyrigh (c) 2023
+
 import { database } from './Database.js';
 
 export const getCliente = async (req, res) => {
