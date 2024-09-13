@@ -29,7 +29,7 @@ router.delete('/cliente/:id', deleteCliente);
 router.get('/cliente', getClienteByQR);
 
 // Rutas para productos
-router.get('/productos', getProductos);                // Obtener todos los productos
+router.get('/products', getProductos);                // Obtener todos los productos
 router.get('/search', searchByName);         // Obtener un producto por ID
 router.post('/productos', getOrCreateProducto);        // Crear un nuevo producto o buscar uno existente
 router.put('/productos/:id', updateProducto);          // Actualizar un producto

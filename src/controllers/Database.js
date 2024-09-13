@@ -2,9 +2,8 @@
 // Autor: Jonatan David Vargas Revollo
 // Copyrigh (c) 2023
 
-import { createPool } from 'mysql2/promise'
+import { createPool } from 'mysql2/promise';
 
-// se pone mysql2/promise por que a la hora de ejecutarlo lo hicimos asincrono y necesita que sea una promesa el sigiuente codigo en erver.js
 class Database {
     async connect() {
         this.pool = createPool({
@@ -15,9 +14,9 @@ class Database {
         });
     }
 
-    async query(sql, params) { // Se añade el parámetro "params"
+    async query(sql, params) {
         try {
-            const [rows] = await this.pool.query(sql, params); // Se pasan los parámetros aquí
+            const [rows] = await this.pool.query(sql, params);
             return rows;
         } catch (error) {
             console.error('Error en la consulta SQL:', error);
@@ -26,4 +25,6 @@ class Database {
     }
 }
 
+
 export const database = new Database();
+

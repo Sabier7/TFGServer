@@ -72,16 +72,30 @@ export const deleteCliente = async (req, res) => {
 };
 export const getProductos = async (req, res) => {
     try {
-        const [rows] = await database.query('SELECT * FROM productos');
-        res.json(rows);
+        const rows = await database.query('SELECT * FROM productos');
+        
+        // Verifica si rows es un array o un objeto
+        console.log('Tipo de datos de rows:', typeof rows);
+        console.log('Es un array?', Array.isArray(rows));
+        console.log('Productos obtenidos:', rows);
+
+        // Asegúrate de que es un array antes de enviarlo como respuesta
+        if (Array.isArray(rows)) {
+            res.json(rows);  // Devuelve todos los productos como array
+        } else {
+            res.json([rows]);  // Si solo es un objeto, lo envuelve en un array
+        }
     } catch (error) {
-        res.status(500).json({ error: 'Error al obtener productos' });
+        console.error('Error al obtener productos:', error);
+        res.status(500).json({ error: 'Error al obtener productos', details: error.message });
     }
 };
+
 export const getOrCreateProducto = async (req, res) => {
     const { nombre, descripcion, precio, cantidad, fechaCaducidad } = req.body;
-    
+
     console.log('Datos recibidos del QR:', { nombre, descripcion, precio, cantidad, fechaCaducidad });
+
     try {
         // Verificar si el producto ya existe
         let query = 'SELECT * FROM productos WHERE nombre = ? AND descripcion = ? AND precio = ?';
@@ -92,29 +106,37 @@ export const getOrCreateProducto = async (req, res) => {
             params.push(fechaCaducidad);
         }
 
-        const [producto] = await database.query(query, params);
+        // Ejecutar la consulta y verificar el resultado
+        const rows = await database.query(query, params);  // No desestructurar aquí
+        
+        console.log('Resultado de la consulta:', rows);
 
-        if (producto.length > 0) {
+        if (rows && Array.isArray(rows) && rows.length > 0) {
             // El producto ya existe, aumentar la cantidad
-            const productoExistente = producto[0];
+            const productoExistente = rows[0]; // Acceder al primer objeto
             const nuevaCantidad = productoExistente.cantidad + cantidad;
             await database.query('UPDATE productos SET cantidad = ? WHERE id = ?', [nuevaCantidad, productoExistente.id]);
 
             return res.json({ message: 'Cantidad actualizada', producto: { ...productoExistente, cantidad: nuevaCantidad } });
         } else {
             // El producto no existe, agregarlo
-            const [result] = await database.query(
+            const [resultInsert] = await database.query(
                 'INSERT INTO productos (nombre, descripcion, precio, cantidad, fecha_caducidad) VALUES (?, ?, ?, ?, ?)',
-                [nombre, descripcion, precio, cantidad, fechaCaducidad || null]
+                [nombre, descripcion, parseFloat(precio), parseInt(cantidad, 10), fechaCaducidad]
             );
 
-            return res.json({
-                message: 'Producto creado',
-                producto: { id: result.insertId, nombre, descripcion, precio, cantidad, fechaCaducidad }
-            });
+            if (resultInsert.affectedRows > 0) {
+                return res.json({
+                    message: 'Producto creado',
+                    producto: { id: resultInsert.insertId, nombre, descripcion, precio, cantidad, fechaCaducidad }
+                });
+            } else {
+                throw new Error('Error al insertar el producto');
+            }
         }
     } catch (error) {
-        return res.status(500).json({ message: 'Error al procesar el producto', error });
+        console.error('Error al procesar el producto:', error.message);
+        return res.status(500).json({ message: 'Error al procesar el producto', error: error.message });
     }
 };
 
